@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SleepSense — Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #f0f5fc;
+      --bg2:     #e6edf8;
+      --card:    #ffffff;
+      --border:  #d0ddf0;
+      --accent:  #1a6bad;
+      --gold:    #b07d0e;
+      --green:   #1a7a52;
+      --red:     #b83232;
+      --indigo:  #3d52b8;
+      --teal:    #0e7490;
+      --text:    #1a2640;
+      --muted:   #5a6e8a;
+      --dim:     #8a9ab8;
+      --white:   #ffffff;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    nav { padding: 14px 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--white); }
+    .nav-left { display: flex; align-items: center; gap: 20px; }
+    .nav-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--accent); text-decoration: none; }
+    .nav-logo span { color: var(--gold); }
+    .nav-student { font-size: 0.75rem; color: var(--muted); border-left: 1px solid var(--border); padding-left: 16px; line-height: 1.5; }
+    .nav-student strong { display: block; color: var(--text); font-weight: 600; }
+    .back-btn { text-decoration: none; display: inline-flex; align-items: center; gap: 7px; background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; transition: background 0.2s, transform 0.15s; }
+    .back-btn:hover { background: var(--border); transform: translateX(-2px); }
+
+    .page { flex: 1; display: grid; grid-template-columns: 1fr 1.1fr; gap: 0; max-width: 1100px; margin: 0 auto; width: 100%; padding: 50px 24px; align-items: start; }
+    @media (max-width: 750px) { .page { grid-template-columns: 1fr; gap: 40px; } }
+
+    .info-panel { padding-right: 48px; }
+    .info-panel h1 { font-family: 'DM Serif Display', serif; font-size: 2.2rem; color: var(--text); line-height: 1.15; margin-bottom: 12px; }
+    .info-panel h1 em { font-style: italic; color: var(--accent); }
+    .info-panel p { color: var(--muted); font-size: 0.9rem; line-height: 1.7; font-weight: 300; margin-bottom: 32px; }
+    .info-classes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .info-class { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; }
+    .info-class-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .info-class-name { font-size: 0.88rem; font-weight: 600; color: var(--text); width: 100px; }
+    .info-class-desc { font-size: 0.8rem; color: var(--muted); font-weight: 300; }
+    .accuracy-badge { display: inline-flex; align-items: center; gap: 10px; background: rgba(26,122,82,0.08); border: 1px solid rgba(26,122,82,0.2); border-radius: 10px; padding: 12px 18px; }
+    .accuracy-badge .big { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--green); }
+    .accuracy-badge .lbl { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+    .form-card { background: var(--white); border: 1px solid var(--border); border-radius: 18px; padding: 36px 32px; box-shadow: 0 4px 24px rgba(26,107,173,0.08); }
+    .form-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); margin-bottom: 6px; }
+    .form-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 28px; font-weight: 300; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 0.74rem; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .field input, .field select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; color: var(--text); font-size: 0.9rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s, background 0.2s; -webkit-appearance: none; }
+    .field input:focus, .field select:focus { border-color: var(--accent); background: var(--white); }
+    .field select option { background: var(--white); color: var(--text); }
+    .submit-btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--white); cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
+    .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Result boxes ── */
+    .results-grid { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; animation: fadeIn 0.4s ease; }
+    .result-box { border-radius: 14px; overflow: hidden; }
+    .result-header { padding: 16px 18px 10px; }
+    .result-method { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.55; }
+    .result-class { font-family: 'DM Serif Display', serif; font-size: 1.25rem; line-height: 1.2; }
+    .result-desc { padding: 0 18px 14px; font-size: 0.78rem; font-weight: 300; line-height: 1.55; opacity: 0.75; }
+
+    /* Naive Bayes box */
+    .nb-none    { background: rgba(26,122,82,0.07);  border: 1px solid rgba(26,122,82,0.2); }
+    .nb-insomnia{ background: rgba(184,50,50,0.07);  border: 1px solid rgba(184,50,50,0.2); }
+    .nb-apnea   { background: rgba(61,82,184,0.07);  border: 1px solid rgba(61,82,184,0.2); }
+    .nb-error   { background: rgba(176,125,14,0.07); border: 1px solid rgba(176,125,14,0.2); }
+
+    /* Cluster box */
+    .cluster-box { background: rgba(14,116,144,0.07); border: 1px solid rgba(14,116,144,0.2); }
+
+    .prob-section { padding: 10px 18px 16px; border-top: 1px solid rgba(0,0,0,0.06); }
+    .prob-title   { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(0,0,0,0.35); margin-bottom: 10px; }
+    .prob-row     { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.76rem; }
+    .prob-name    { width: 82px; color: var(--text); }
+    .prob-bg      { flex: 1; background: rgba(0,0,0,0.06); border-radius: 4px; height: 6px; }
+    .prob-fill    { height: 6px; border-radius: 4px; transition: width 0.8s ease; }
+    .prob-None        { background: var(--green);  }
+    .prob-Insomnia    { background: var(--red);    }
+    .prob-Sleep-Apnea { background: var(--indigo); }
+    .prob-pct     { width: 34px; text-align: right; color: var(--muted); font-size: 0.74rem; }
+
+    .cluster-detail { padding: 10px 18px 16px; border-top: 1px solid rgba(0,0,0,0.06); }
+    .cluster-num  { display: inline-block; background: rgba(14,116,144,0.12); border-radius: 6px; padding: 3px 10px; font-size: 0.75rem; color: var(--teal); font-weight: 600; margin-bottom: 8px; }
+    .cluster-note { font-size: 0.76rem; color: var(--muted); line-height: 1.5; font-weight: 300; }
+
+    /* Agreement badge */
+    .agreement { margin-top: 12px; padding: 10px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 500; text-align: center; animation: fadeIn 0.4s ease; }
+    .agree-yes  { background: rgba(26,122,82,0.1);  border: 1px solid rgba(26,122,82,0.25);  color: var(--green); }
+    .agree-no   { background: rgba(184,50,50,0.08); border: 1px solid rgba(184,50,50,0.2);   color: var(--red);   }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    footer { border-top: 1px solid var(--border); padding: 18px 36px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: var(--white); }
+    footer p { font-size: 0.75rem; color: var(--dim); }
+    footer strong { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <a href="/" class="nav-logo">Velandres</a>
+      <div class="nav-student">
+        <strong>C191-3P · CIS302</strong>
+      </div>
+    </div>
+    <a href="/" class="back-btn">← Back to Home</a>
+  </nav>
+
+  <div class="page">
+    <!-- Left info panel -->
+    <div class="info-panel">
+      <h1>Sleep Disorder<br/><em>Predictor</em></h1>
+      <p>Fill in your health and lifestyle details. The app runs both Naive Bayes and K-Means Clustering to give you two perspectives on your result.</p>
+      <div class="info-classes">
+        <div class="info-class">
+          <div class="info-class-dot" style="background:var(--green)"></div>
+          <div class="info-class-name">No Disorder</div>
+          <div class="info-class-desc">Normal sleep patterns detected</div>
+        </div>
+        <div class="info-class">
+          <div class="info-class-dot" style="background:var(--red)"></div>
+          <div class="info-class-name">Insomnia</div>
+          <div class="info-class-desc">Difficulty sleeping, high stress</div>
+        </div>
+        <div class="info-class">
+          <div class="info-class-dot" style="background:var(--indigo)"></div>
+          <div class="info-class-name">Sleep Apnea</div>
+          <div class="info-class-desc">Breathing interruptions, high BMI</div>
+        </div>
+      </div>
+      <div class="accuracy-badge">
+        <div class="big">86.67%</div>
+        <div class="lbl">Naive Bayes Accuracy<br/>Gaussian NB · sklearn</div>
+      </div>
+    </div>
+
+    <!-- Form + results -->
+    <div>
+      <div class="form-card">
+        <h2>Enter Your Details</h2>
+        <p class="form-sub">All 8 features are required. Results from both models will appear below.</p>
+
+        <form method="POST" action="/predict">
+          <div class="form-grid">
+            <div class="field">
+              <label>Gender</label>
+              <select name="gender">
+                <option value="Male"   {% if input_data and input_data.gender == 'Male'   %}selected{% endif %}>Male</option>
+                <option value="Female" {% if input_data and input_data.gender == 'Female' %}selected{% endif %}>Female</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Age (years)</label>
+              <input type="number" name="age" min="18" max="80" value="{{ input_data.age if input_data else 30 }}" required/>
+            </div>
+            <div class="field">
+              <label>Sleep Duration (hrs)</label>
+              <input type="number" name="sleep_duration" step="0.1" min="3" max="12" value="{{ input_data.sleep_duration if input_data else 7.0 }}" required/>
+            </div>
+            <div class="field">
+              <label>Quality of Sleep (1-10)</label>
+              <input type="number" name="quality" min="1" max="10" value="{{ input_data.quality if input_data else 6 }}" required/>
+            </div>
+            <div class="field">
+              <label>Physical Activity (min/day)</label>
+              <input type="number" name="activity" min="0" max="120" value="{{ input_data.activity if input_data else 45 }}" required/>
+            </div>
+            <div class="field">
+              <label>Stress Level (1-10)</label>
+              <input type="number" name="stress" min="1" max="10" value="{{ input_data.stress if input_data else 5 }}" required/>
+            </div>
+            <div class="field">
+              <label>BMI Category</label>
+              <select name="bmi">
+                <option value="Normal"        {% if input_data and input_data.bmi == 'Normal'        %}selected{% endif %}>Normal</option>
+                <option value="Normal Weight" {% if input_data and input_data.bmi == 'Normal Weight' %}selected{% endif %}>Normal Weight</option>
+                <option value="Overweight"    {% if input_data and input_data.bmi == 'Overweight'    %}selected{% endif %}>Overweight</option>
+                <option value="Obese"         {% if input_data and input_data.bmi == 'Obese'         %}selected{% endif %}>Obese</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Heart Rate (bpm)</label>
+              <input type="number" name="heart_rate" min="40" max="120" value="{{ input_data.heart_rate if input_data else 72 }}" required/>
+            </div>
+          </div>
+          <button type="submit" class="submit-btn">Predict Sleep Disorder</button>
+        </form>
+
+        <!-- Both results side by side -->
+        {% if prediction %}
+          <div class="results-grid">
+
+            <!-- Naive Bayes result -->
+            {% if prediction == 'None' %}
+              <div class="result-box nb-none">
+                <div class="result-header">
+                  <div class="result-method">Naive Bayes</div>
+                  <div class="result-class" style="color:var(--green)">No Disorder</div>
+                </div>
+                <div class="result-desc" style="color:var(--green)">No significant sleep disorder detected from your lifestyle data.</div>
+            {% elif prediction == 'Insomnia' %}
+              <div class="result-box nb-insomnia">
+                <div class="result-header">
+                  <div class="result-method">Naive Bayes</div>
+                  <div class="result-class" style="color:var(--red)">Insomnia</div>
+                </div>
+                <div class="result-desc" style="color:var(--red)">Difficulty falling or staying asleep. High stress and low sleep quality are key indicators.</div>
+            {% elif prediction == 'Sleep Apnea' %}
+              <div class="result-box nb-apnea">
+                <div class="result-header">
+                  <div class="result-method">Naive Bayes</div>
+                  <div class="result-class" style="color:var(--indigo)">Sleep Apnea</div>
+                </div>
+                <div class="result-desc" style="color:var(--indigo)">Repeated breathing interruptions. Often linked to higher BMI and heart rate.</div>
+            {% else %}
+              <div class="result-box nb-error">
+                <div class="result-header">
+                  <div class="result-method">Error</div>
+                  <div class="result-class" style="color:var(--gold)">Something went wrong</div>
+                </div>
+                <div class="result-desc" style="color:var(--gold)">{{ error }}</div>
+            {% endif %}
+              {% if probs %}
+                <div class="prob-section">
+                  <div class="prob-title">Confidence</div>
+                  {% for cls, pct in probs.items() %}
+                    <div class="prob-row">
+                      <div class="prob-name">{{ cls }}</div>
+                      <div class="prob-bg">
+                        <div class="prob-fill prob-{{ cls | replace(' ', '-') }}" style="width:{{ pct }}%"></div>
+                      </div>
+                      <div class="prob-pct">{{ pct }}%</div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Cluster result -->
+            {% if cluster_name %}
+              <div class="result-box cluster-box">
+                <div class="result-header">
+                  <div class="result-method">K-Means Clustering</div>
+                  <div class="result-class" style="color:var(--teal)">
+                    {% if cluster_name == 'None' %}No Disorder
+                    {% elif cluster_name == 'Insomnia' %}Insomnia
+                    {% else %}Sleep Apnea
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="result-desc" style="color:var(--teal)">
+                  Your data pattern most closely matches the {{ cluster_name }} cluster group.
+                </div>
+                <div class="cluster-detail">
+                  <div class="prob-title">Cluster Info</div>
+                  <span class="cluster-num">Cluster {{ cluster_num }}</span>
+                  <div class="cluster-note">
+                    K-Means grouped your inputs by similarity to 374 training records.
+                    Distance to cluster center: {{ nearest_dist }}.
+                    Smaller distance = stronger match.
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+          </div>
+
+          <!-- Agreement indicator -->
+          {% if prediction and cluster_name %}
+            {% if prediction == cluster_name %}
+              <div class="agreement agree-yes">
+                ✅ Both models agree — <strong>{{ prediction }}</strong>
+              </div>
+            {% else %}
+              <div class="agreement agree-no">
+                ⚠️ Models disagree — Naive Bayes: <strong>{{ prediction }}</strong> · Cluster: <strong>{{ cluster_name }}</strong>
+              </div>
+            {% endif %}
+          {% endif %}
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>Velandres</strong> · C191-3P Activity · CIS302 &nbsp;|&nbsp;  </p>
+    <p>For educational purposes only — not a medical diagnostic tool</p>
+  </footer>
+</body>
+</html>
